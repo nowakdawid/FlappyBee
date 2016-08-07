@@ -12,12 +12,14 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.input.GestureDetector;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
-public class GameScreen extends ScreenAdapter {
+public class GameScreen extends ScreenAdapter implements GestureDetector.GestureListener {
 
     private static final float WORLD_WIDTH = 480;
     private static final float WORLD_HEIGHT = 640;
@@ -45,6 +47,8 @@ public class GameScreen extends ScreenAdapter {
 
     private Texture flappyTexture;
 
+    private GestureDetector gestureDetector;
+
     @Override
     public void show() {
         camera = new OrthographicCamera();
@@ -59,6 +63,8 @@ public class GameScreen extends ScreenAdapter {
         flappyTexture = new Texture(Gdx.files.internal("bee.png"));
         flappy = new Flappy(flappyTexture);
         flappy.setPosition(WORLD_WIDTH / 4, WORLD_HEIGHT / 2);
+        gestureDetector = new GestureDetector(this);
+        Gdx.input.setInputProcessor(gestureDetector);
     }
 
     @Override
@@ -97,7 +103,7 @@ public class GameScreen extends ScreenAdapter {
     }
 
     private void updateFlappy(float delta) {
-        flappy.update();
+        flappy.update(delta);
         if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) flappy.flyUp();
         blockFlappyLeavingTheWorld();
     }
@@ -198,4 +204,49 @@ public class GameScreen extends ScreenAdapter {
         }
     }
 
+    @Override
+    public boolean touchDown(float x, float y, int pointer, int button) {
+        return false;
+    }
+
+    @Override
+    public boolean tap(float x, float y, int count, int button) {
+        flappy.flyUp();
+        return false;
+    }
+
+    @Override
+    public boolean longPress(float x, float y) {
+        return false;
+    }
+
+    @Override
+    public boolean fling(float velocityX, float velocityY, int button) {
+        return false;
+    }
+
+    @Override
+    public boolean pan(float x, float y, float deltaX, float deltaY) {
+        return false;
+    }
+
+    @Override
+    public boolean panStop(float x, float y, int pointer, int button) {
+        return false;
+    }
+
+    @Override
+    public boolean zoom(float initialDistance, float distance) {
+        return false;
+    }
+
+    @Override
+    public boolean pinch(Vector2 initialPointer1, Vector2 initialPointer2, Vector2 pointer1, Vector2 pointer2) {
+        return false;
+    }
+
+    @Override
+    public void pinchStop() {
+
+    }
 }
