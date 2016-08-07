@@ -7,6 +7,9 @@ import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
@@ -24,11 +27,23 @@ public class GameScreen extends ScreenAdapter {
     private Camera camera;
     private SpriteBatch batch;
 
-    private Flappy flappy = new Flappy();
+    private Flappy flappy;
 
     private Array<Flower> flowers = new Array<Flower>();
 
     private static final float GAP_BETWEEN_FLOWERS = 200F;
+
+    private int score = 0;
+
+    private BitmapFont bitmapFont;
+    private GlyphLayout glyphLayout;
+
+    private Texture background;
+
+    private Texture flowerBottom;
+    private Texture flowerTop;
+
+    private Texture flappyTexture;
 
     @Override
     public void show() {
@@ -36,6 +51,13 @@ public class GameScreen extends ScreenAdapter {
         viewport = new FitViewport(WORLD_WIDTH, WORLD_HEIGHT, camera);
         shapeRenderer = new ShapeRenderer();
         batch = new SpriteBatch();
+        bitmapFont = new BitmapFont();
+        glyphLayout = new GlyphLayout();
+        background = new Texture(Gdx.files.internal("bg.png"));
+        flowerBottom = new Texture(Gdx.files.internal("flowerBottom.png"));
+        flowerTop = new Texture(Gdx.files.internal("flowerTop.png"));
+        flappyTexture = new Texture(Gdx.files.internal("bee.png"));
+        flappy = new Flappy(flappyTexture);
         flappy.setPosition(WORLD_WIDTH / 4, WORLD_HEIGHT / 2);
     }
 
@@ -53,12 +75,16 @@ public class GameScreen extends ScreenAdapter {
         update(delta);
         clearScreen();
         draw();
-        drawDebug();
+//        drawDebug();
     }
 
     private void update(float delta) {
         updateFlappy(delta);
         updateFlowers(delta);
+        updateScore();
+        if (checkForCollision()) {
+            restart();
+        }
     }
 
     private void clearScreen() {
@@ -77,7 +103,7 @@ public class GameScreen extends ScreenAdapter {
     }
 
     private void createNewFlower() {
-        Flower newFlower = new Flower();
+        Flower newFlower = new Flower(flowerBottom, flowerTop);
         newFlower.setPosition(WORLD_WIDTH + Flower.WIDTH);
         flowers.add(newFlower);
     }
@@ -107,6 +133,10 @@ public class GameScreen extends ScreenAdapter {
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
         shapeRenderer.end();
         batch.begin();
+        batch.draw(background, 0, 0);
+        drawFlowers();
+        flappy.draw(batch);
+        drawScore();
         batch.end();
     }
 
@@ -130,6 +160,42 @@ public class GameScreen extends ScreenAdapter {
 
         flappy.drawDebug(shapeRenderer);
         shapeRenderer.end();
+    }
+
+    private boolean checkForCollision() {
+        for (Flower flower : flowers) {
+            if (flower.isFlappeeColliding(flappy)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void restart() {
+        flappy.setPosition(WORLD_WIDTH / 4, WORLD_HEIGHT / 2);
+        flowers.clear();
+        score = 0;
+    }
+
+    private void updateScore() {
+        Flower flower = flowers.first();
+        if (flower.getX() < flappy.getX() && !flower.isPointClaimed()) {
+            flower.markPointClaimed();
+            score++;
+        }
+    }
+
+    private void drawScore() {
+        String scoreAsString = Integer.toString(score);
+        glyphLayout.setText(bitmapFont, scoreAsString);
+        bitmapFont.draw(batch, scoreAsString, (viewport.getWorldWidth() / 2),
+                (4 * viewport.getWorldHeight() / 5) - glyphLayout.height / 2);
+    }
+
+    private void drawFlowers() {
+        for (Flower flower : flowers) {
+            flower.draw(batch);
+        }
     }
 
 }

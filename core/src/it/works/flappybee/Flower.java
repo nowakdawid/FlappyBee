@@ -1,7 +1,10 @@
 package it.works.flappybee;
 
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Circle;
+import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 
@@ -26,7 +29,14 @@ public class Flower {
     private final Circle ceilingCollisionCircle;
     private final Rectangle ceilingCollisionRectangle;
 
-    public Flower() {
+    private boolean pointClaimed;
+
+    private final Texture floorTexture;
+    private final Texture ceilingTexture;
+
+    public Flower(Texture floorTexture, Texture ceilingTexture) {
+        this.floorTexture = floorTexture;
+        this.ceilingTexture = ceilingTexture;
 
         this.y = MathUtils.random(HEIGHT_OFFSET);
 
@@ -75,6 +85,40 @@ public class Flower {
         setPosition(x - (MAX_SPEED_PER_SECOND * delta));
     }
 
+    public boolean isFlappeeColliding(Flappy flappy) {
+        Circle flappyCollisionCircle = flappy.getCollisionCircle();
+        return Intersector.overlaps(flappyCollisionCircle, ceilingCollisionCircle) ||
+                Intersector.overlaps(flappyCollisionCircle, floorCollisionCircle) ||
+                Intersector.overlaps(flappyCollisionCircle, ceilingCollisionRectangle) ||
+                Intersector.overlaps(flappyCollisionCircle, floorCollisionRectangle);
+    }
+
+    public boolean isPointClaimed() {
+        return pointClaimed;
+    }
+
+    public void markPointClaimed() {
+        pointClaimed = true;
+    }
+
+    public void draw(SpriteBatch batch) {
+        drawFloorFlower(batch);
+        drawCeilingFlower(batch);
+    }
+
+    private void drawFloorFlower(SpriteBatch batch) {
+        float textureX = floorCollisionCircle.x - floorTexture.getWidth() / 2;
+        float textureY = floorCollisionRectangle.getY() + COLLISION_CIRCLE_RADIUS;
+        batch.draw(floorTexture, textureX, textureY);
+    }
+
+    private void drawCeilingFlower(SpriteBatch batch) {
+        float textureX = ceilingCollisionCircle.x - ceilingTexture.getWidth() / 2;
+        float textureY = ceilingCollisionRectangle.getY() - COLLISION_CIRCLE_RADIUS;
+        batch.draw(ceilingTexture, textureX, textureY);
+    }
+
+    //Getters and Setters
     public float getX() {
         return x;
     }
